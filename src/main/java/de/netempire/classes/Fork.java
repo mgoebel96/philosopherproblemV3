@@ -15,7 +15,8 @@ public class Fork {
     public void get() throws InterruptedException {
         // Fork is taken from the table. -> status: taken
         while (taken) {
-            sleep(10); // wait until the fork is back on the table.
+            // wait until the fork is back on the table.
+            sleep(10);
         }
         taken = true;
     }

@@ -18,8 +18,8 @@ import static java.lang.Thread.sleep;
 
 public class PhilosophersDesk {
 
-    public static Semaphore satedPhilosophers = new Semaphore(5, true);
-    public static String report;
+    public static final Semaphore satedPhilosophers = new Semaphore(5, true);
+    public static String report = "";
     static Fork fork1 = new Fork();
     static Fork fork2 = new Fork();
     static Fork fork3 = new Fork();
@@ -38,25 +38,28 @@ public class PhilosophersDesk {
     static Date start = Calendar.getInstance().getTime();
     static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     static Runnable controller;
+    static Philosopher[] philosophers;
 
     public static void main(String[] args) {
         PhilosophersDesk.startProcess();
     }
 
     private static void startProcess() {
-        initialize();
+        initializePhilosophers();
+        initializeController();
         start();
     }
 
-    public static void initialize (){
+    public static void initializePhilosophers() {
         platon.setEatingTime(750);
         aristoteles.setEatingTime(1000);
         herder.setEatingTime(300);
         fichte.setEatingTime(1500);
         schlegel.setEatingTime(500);
+        philosophers = new Philosopher[]{platon, aristoteles, herder, fichte, schlegel};
+    }
 
-        Philosopher[] philosophers = new Philosopher[]{ platon, aristoteles, herder, fichte, schlegel };
-
+    public static void initializeController() {
         controller = () -> {
             if(!platonThread.isAlive() && !herderThread.isAlive() && !aristotelesThread.isAlive() && !fichteThread.isAlive() && !schlegelThread.isAlive()){
                 platon.stop();
@@ -71,27 +74,19 @@ public class PhilosophersDesk {
             if (PhilosophersDesk.satedPhilosophers.availablePermits() != 0) return;
             System.out.println("Es haben alle Philosophen hunger!");
             try {
-                Optional<Philosopher> lastPhiloso = Arrays.stream(philosophers).filter(p -> p.name.equals(report)).findFirst();
-                int idLastPhiloso = lastPhiloso.map(philosopher -> philosopher.id - 1).orElse(0);
+                Optional<Philosopher> lastPhiloso = Arrays.stream(philosophers).filter(p -> p.getName().equals(report)).findFirst();
+                int idLastPhiloso = lastPhiloso.map(philosopher -> philosopher.getId() - 1).orElse(0);
                 MyLogger.log(report + " legt seine Gabeln wieder auf den Tisch.");
-                if(Arrays.asList(philosophers).get(idLastPhiloso).right.isTaken()){
-                    Arrays.asList(philosophers).get(idLastPhiloso).right.put();
-                    while (PhilosophersDesk.satedPhilosophers.availablePermits() < 1) {
-                        sleep(100);
-                    }
-                    while (Arrays.asList(philosophers).get(idLastPhiloso).right.getId() != -1) {
-                        sleep(100);
-                    }
-                    Arrays.asList(philosophers).get(idLastPhiloso).right.get();
+                if(Arrays.asList(philosophers).get(idLastPhiloso).getRight().isTaken()){
+                    Arrays.asList(philosophers).get(idLastPhiloso).getRight().put();
+                    while (PhilosophersDesk.satedPhilosophers.availablePermits() < 1) sleep(100);
+                    while (Arrays.asList(philosophers).get(idLastPhiloso).getRight().getId() != -1) sleep(100);
+                    Arrays.asList(philosophers).get(idLastPhiloso).getRight().get();
                 } else {
-                    Arrays.asList(philosophers).get(idLastPhiloso).left.put();
-                    while (PhilosophersDesk.satedPhilosophers.availablePermits() < 1) {
-                        sleep(100);
-                    }
-                    while (Arrays.asList(philosophers).get(idLastPhiloso).left.getId() != -1) {
-                        sleep(100);
-                    }
-                    Arrays.asList(philosophers).get(idLastPhiloso).left.get();
+                    Arrays.asList(philosophers).get(idLastPhiloso).getLeft().put();
+                    while (PhilosophersDesk.satedPhilosophers.availablePermits() < 1) sleep(100);
+                    while (Arrays.asList(philosophers).get(idLastPhiloso).getLeft().getId() != -1) sleep(100);
+                    Arrays.asList(philosophers).get(idLastPhiloso).getLeft().get();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
